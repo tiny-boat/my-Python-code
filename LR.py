@@ -21,6 +21,7 @@ import pandas as pd
 import numpy as np
 import math
 import random
+import time
 
 def LR_log_likelihood(df,*theta):
 
@@ -63,10 +64,42 @@ def LR_log_likelihood(df,*theta):
 
 def Optimization(df,method = 'Gradient_Descent',*theta):
 
-	Rel_dis = lambda x,y: abs(x-y)/max(1,abs(y))
-	Vec_norm = lambda x: x*x.T
+	StartTime = time.time()
 
-	if method == 'Gradient_Descent':
+	Rel_dis = lambda x,y: abs(x-y)/max(1,abs(y))
+	Vec_norm = lambda x: math.sqrt(x*x.T)
+
+	if method =='Gradient_Descent':
+		LogLikelihoodCost0, Gradient = LR_log_likelihood(df,theta)
+		LogLikelihoodCost1 = LogLikelihoodCost0
+		RelativeDistance = 1
+		GradientNorm = Vec_norm(Gradient)
+		IterationNum = 0
+
+		print(theta)
+		print(LogLikelihoodCost1)
+		print(GradientNorm)
+		print(RelativeDistance)
+		print("\n")
+
+		#while RelativeDistance > 1e-5 and IterationNum < 501 and GradientNorm > 1e-5:
+		while GradientNorm > 1e-4:
+
+			LogLikelihoodCost0 = LogLikelihoodCost1  # 更新上一次迭代点函数值
+			theta = theta - 0.01*Gradient # 更新当前迭代点
+			theta = theta.tolist()[0]  # 将矩阵转换为列表
+			LogLikelihoodCost1, Gradient = LR_log_likelihood(df,*theta)  # 更新当前迭代点函数值与梯度
+			GradientNorm = Vec_norm(Gradient)  # 更新当前迭代点的梯度范数
+			RelativeDistance = Rel_dis(LogLikelihoodCost1,LogLikelihoodCost0)  # 更新当前迭代点函数值与上一迭代点函数值的相对距离
+			IterationNum += 1 # 更新迭代次数
+
+			print(theta)
+			print(LogLikelihoodCost1)
+			print(GradientNorm)
+			print(RelativeDistance)
+			print("\n")
+
+	elif method == 'Steepest_Descent':
 		LogLikelihoodCost0, Gradient = LR_log_likelihood(df,theta)
 		LogLikelihoodCost1 = LogLikelihoodCost0
 		RelativeDistance = 1
@@ -122,62 +155,16 @@ def Optimization(df,method = 'Gradient_Descent',*theta):
 			print(GradientNorm)
 			print(RelativeDistance)
 			print("\n")
-
-		print("对数似然损失近似极小值点为：%f\n",% (theta))
-		print("迭代次数：%f\n",% (IterationNum))
-
-		return theta,IterationNum
 
 	elif method == 'Stochasitic_Gradient_Descent':
-		LogLikelihoodCost0, Gradient = LR_log_likelihood(df,theta)
-		LogLikelihoodCost1 = LogLikelihoodCost0
-		RelativeDistance = 1
-		GradientNorm = Vec_norm(Gradient)
-		IterationNum = 0
-
-		print(theta)
-		print(LogLikelihoodCost1)
-		print(GradientNorm)
-		print(RelativeDistance)
-		print("\n")
-
-		#while RelativeDistance > 1e-5 and IterationNum < 501 and GradientNorm > 1e-5:
-		while GradientNorm > 1e-4:
-
-			# 搜索步长 k 的函数
-			def g(k):
-				tkG = theta-k*Gradient
-				tkG = tkG.tolist()[0]  # 将矩阵转换为列表
-				return LR_log_likelihood(df,*tkG)[0]
-
-			# 黄金分割法
-			def goldenopt(a,b,error):
-				r=(math.sqrt(5)-1)/2
-				a1=b-r*(b-a)
-				a2=a+r*(b-a)
-				while abs(b-a)>error:
-					g1=g(a1)
-					g2=g(a2)
-					if g1>g2:
-						a=a1
-						g1=g2
-						a1=a2
-						a2=a+r*(b-a)
-					else:
-						b=a2
-						a2=a1
-						g2=g1
-						a1=b-r*(b-a)
-					x=(a+b)/2
-				return x
-
-			LogLikelihoodCost0 = LogLikelihoodCost1  # 更新上一次迭代点函数值
-			theta = theta - goldenopt(0,1,1e-5)*Gradient # 更新当前迭代点
-			theta = theta.tolist()[0]  # 将矩阵转换为列表
-			LogLikelihoodCost1, Gradient = LR_log_likelihood(df,*theta)  # 更新当前迭代点函数值与梯度
-			GradientNorm = Vec_norm(Gradient)  # 更新当前迭代点的梯度范数
-			RelativeDistance = Rel_dis(LogLikelihoodCost1,LogLikelihoodCost0)  # 更新当前迭代点函数值与上一迭代点函数值的相对距离
-			IterationNum += 1 # 更新迭代次数
+		for j in range(50):
+			RowNum = df.shape[0]
+			Index = list(range(0,RowNum))
+			random.shuffle(Index)
+			LogLikelihoodCost0, Gradient = LR_log_likelihood(df.iloc[Index[0],:],theta)
+			LogLikelihoodCost1 = LogLikelihoodCost0
+			RelativeDistance = 1
+			GradientNorm = Vec_norm(Gradient)
 
 			print(theta)
 			print(LogLikelihoodCost1)
@@ -185,67 +172,37 @@ def Optimization(df,method = 'Gradient_Descent',*theta):
 			print(RelativeDistance)
 			print("\n")
 
-		print("对数似然损失近似极小值点为：%f\n",% (theta))
-		print("迭代次数：%f\n",% (IterationNum))
+			#while RelativeDistance > 1e-5 and IterationNum < 501 and GradientNorm > 1e-5:
+			#while GradientNorm > 1e-4:
+			IterationNum = 0
+			while IterationNum < RowNum-1:
 
-		return theta,IterationNum
-'''
-		df0 = df.iloc[int(random.uniform(0,df.shape[0])),:]
-		Gradient_s = LR_log_likelihood(df0,True,False,theta0)[1]
-		LogLikelihoodCost0 = LR_log_likelihood(df,False,False,theta0)
-		LogLikelihoodCost1 = 2*LogLikelihoodCost0
+				IterationNum += 1 # 更新迭代次数
+				LogLikelihoodCost0 = LogLikelihoodCost1  # 更新上一次迭代点函数值
+				theta = theta - (4/(1+j+IterationNum)+0.01)*Gradient # 更新当前迭代点
+				theta = theta.tolist()[0]  # 将矩阵转换为列表
+				LogLikelihoodCost1, Gradient = LR_log_likelihood(df.iloc[Index[IterationNum],:],*theta)  # 更新当前迭代点函数值与梯度
+				GradientNorm = Vec_norm(Gradient)  # 更新当前迭代点的梯度范数
+				RelativeDistance = Rel_dis(LogLikelihoodCost1,LogLikelihoodCost0)  # 更新当前迭代点函数值与上一迭代点函数值的相对距离
 
-		print(theta0)
-		print(Gradient_s * Gradient_s.T)
-		print(LogLikelihoodCost0)
-		print("\n")
+				print(theta)
+				print(LogLikelihoodCost1)
+				print(GradientNorm)
+				print(RelativeDistance)
+				print("\n")
 
-		theta = theta0
-		i = 0
-		while i < 1000:
-			if i != 0:
-				LogLikelihoodCost0 = LogLikelihoodCost1
+	EndTime = time.time()
+	ExecuteTime = EndTime - StartTime
 
-			def g(k):
-				tkG = theta-k*Gradient_s
-				tkG = tkG.tolist()[0]
-				return LR_log_likelihood(df0,False,False,*tkG)
+	print("优化算法：%s\n" % (method))
+	print("对数似然损失近似极小值点为：{0}\n".format(theta))
+	print("对数似然损失为：{0[0]}，对数似然损失梯度为：{0[1]}\n".format(LR_log_likelihood(df,*theta)))
+	print("迭代次数：%d\n" % (IterationNum*50))
+	print("执行时间：%f\n" % (ExecuteTime))
 
-			def goldenopt(a,b,Theta_error):
-				r=(math.sqrt(5)-1)/2
-				a1=b-r*(b-a)
-				a2=a+r*(b-a)
-				while abs(b-a)>Theta_error:
-					g1=g(a1)
-					g2=g(a2)
-					if g1>g2:
-						a=a1
-						g1=g2
-						a1=a2
-						a2=a+r*(b-a)
-					else:
-						b=a2
-						a2=a1
-						g2=g1
-						a1=b-r*(b-a)
-					x_opt=(a+b)/2
-				return x_opt
-
-			theta = theta - goldenopt(0,1,1e-5)*Gradient_s
-			theta = theta.tolist()[0]
-			LogLikelihoodCost1 = LR_log_likelihood(df,False,False,*theta)
-			Gradient_s = LR_log_likelihood(df0,True,False,*theta)[1]
-			print(theta)
-			print(Gradient_s * Gradient_s.T)
-			print(LogLikelihoodCost1)
-			print("\n")
-			i += 1
-			df0 = df.iloc[int(random.uniform(0,df.shape[0])),:]
-
-		return theta
-'''
+	return theta,IterationNum,ExecuteTime
 
 df_g = pd.read_csv('F:/Data/testSet.csv',encoding='GB2312')
 theta_g = [-0.1,0.1,0,0]
-result = Optimization(df_g,'Gradient_Descent',*theta_g)
+result = Optimization(df_g,'Stochasitic_Gradient_Descent',*theta_g)
 print(result)
