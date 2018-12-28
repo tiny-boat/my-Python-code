@@ -65,12 +65,11 @@ def LR_Log_likelihood(df,isgradient = False,ishessian = False,*theta):
 	LogLikelihoodCost = np.sum(LogExao) - Y * XTimesTheta
 
 	# 1*ColNum 对数似然损失梯度的转置（雅可比矩阵）-[Y' - 1/(1+exp(-X*θ)]' * X
-	if isgradient == True and ishessian == False:
+	if isgradient == True:
 		LogLikelihoodCostGradient = (P1.T - Y) * X
 		return LogLikelihoodCost, LogLikelihoodCostGradient
 	# ColNum*ColNum 对数似然损失海森矩阵 -X'*H*X
-	elif ishessian == True:
-		LogLikelihoodCostGradient = (P1.T - Y) * X
+	if ishessian == True:
 		H = np.diag(np.array(np.multiply(P1,P0).T)[0])
 		LogLikelihoodCostHessian = - X.T * H * X
 		return LogLikelihoodCost, LogLikelihoodCostGradient, LogLikelihoodCostHessian
