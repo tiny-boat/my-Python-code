@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+'''
+本程序验证了：孙文瑜 袁亚湘 著《最优化理论与方法》1.2.4 节（秩一校正）中
+关于 ”P 的 2 范数 = y^T * x / (||x|| * ||y||)“ 的结论是错误的
+这里 P = I - x * y^T / (||x|| * ||y||)，I 为单位矩阵
+
+'''
+
 import numpy as np
 import math
 import random
