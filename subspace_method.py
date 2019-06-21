@@ -123,8 +123,8 @@ def Subspace_method(A,b,x,epsilon):
 	return x1.T, r.T, r_norm, iter_num
 
 
-A = np.mat([[1,2,3],[2,7,4],[4,5,9]])
-b = np.mat([[14],[28],[41]])
-x = np.mat([[1],[1],[1]])
-epsilon = 1e-8
+A = np.mat([[1,2,3],[2,7,4],[3,4,9]])
+b = np.mat([[14],[28],[38]])
+x = np.mat([[1000],[-400],[75]])
+epsilon = 1e-4
 Subspace_method(A,b,x,epsilon)
