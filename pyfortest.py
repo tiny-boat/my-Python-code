@@ -67,7 +67,52 @@ import Vector3
 异常处理：try except raise finally assert 
 上下文管理：with
 
-2.4 Python 内置函数
+2.4 Python 内置函数（使用 dir(__builtins__) 查看所有内置对象）
+
+① 类型转换
+bin(integer),oct(integer),hex(integer)
+int(num/str=0),int(str,base=10),float(num/str),complex(real,imag)
+ord(str),chr(num),ascii(obj)
+bytes(int),bytes(str,encoding),str(obj),str(bytes,encoding)
+list(),tuple(),dict(),set(),frozenset()
+
+② 类型判断
+type(obj),isinstance(obj,class_or_tuple)
+
+③ 最值与求和
+max/min(iterable, *[, default=obj, key=func])
+max/min(arg1, arg2, *args, *[, key=func])
+sum(iterable, start=0, /)
+/ 代表不允许以关键参数的形式进行传值，例如 sum([1,2,3],start=4) 会报错
+
+④ 基本输入输出
+input(prompt=None, /)
+print(value, ..., sep=' ', end='\n', file=sys.stdout, flush=False)
+sys.stdin.read(size=-1, /)
+sys.stdin.readline(size=-1, /)
+pprint.pprint()
+
+⑤ 排序与逆序
+sorted(iterable, key=None, reverse=False)
+reversed(sequence)
+
+⑥ 枚举与迭代
+enumerate(iterable[, start]) -> iterator for index, value of iterable
+iter(iterable) -> iterator
+iter(callable, sentinel) -> iterator
+next(iterator[, default])
+
+⑦ map(),reduce(),filter()
+map(func, *iterables) --> map object
+reduce(function, sequence[, initial])
+filter(function or None, iterable)
+
+⑧ range(),zip(),eval(),exec()
+range(stop)
+range(start, stop[, step])
+zip(iter1 [,iter2 [...]])
+eval(source, globals=None, locals=None, /)
+exec(source, globals=None, locals=None, /)
 
 
 
