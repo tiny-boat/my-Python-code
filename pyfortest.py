@@ -114,6 +114,145 @@ zip(iter1 [,iter2 [...]])
 eval(source, globals=None, locals=None, /)
 exec(source, globals=None, locals=None, /)
 
+'''
 
+'''
+有序序列：list、tuple、str 无序序列：dict、set
+可变序列：list、dict、set 不可变序列：tuple、str
+生成器（generator）、map、enumerate、filter、zip 等能被 next() 调用的迭代器（iterator）以及 range 等迭代对象（iterable）的某些用法也类似于序列
 
+迭代器（iterator）：能被 next() 调用的对象，generator、map、enumerte、filter、zip
+迭代对象（iterable）：可直接作用于 for 循环的对象， generator、map、enumerate、filter、zip、list、tuple、str、dict、set、range
+generator、map、enumerate、filter、zip 将序列这一可迭代对象转换为具有惰性求值特点的迭代器
+for 循环本质上是通过 iter() 将可迭代对象转换为迭代器，然后对迭代器不断调用 next() 函数实现的
+
+3.1/3.2 列表,元组
+
+增：
+L.append(object) -> None -- append object to end
+L.extend(iterable) -> None -- extend list by appending elements from the iterable
+L.insert(index, object) -- insert object before index
+L += list(iterable)
+L *= list(iterable)
+
+删：
+L.clear() -> None -- remove all items from L
+L.pop([index]) -> item -- remove and return item at index (default last).
+L.remove(value) -> None -- remove first occurrence of value.
+L[start=0:end=len(L):step=1] = []
+del L[start=0:end=len(L):step=1]
+
+改：
+L[start=0:end=len(L):step=1] = list(iterable)
+
+查：
+L[start=0:end=len(L):step=1]
+L.index(value, [start, [stop]]) -> integer -- return first index of value.
+L.count(value) -> integer -- return number of occurrences of value
+L.reverse() -- reverse *IN PLACE*
+L.sort(key=None, reverse=False) -> None -- stable sort *IN PLACE*
+
+复制：
+L.copy() -> list -- a shallow copy of L
+L[::]
+
+对元组而言，其公用方法只有 T.index(), T.count()，几乎所有的增、删、改操作都是无效的（只能使用 del 删除整个元组）
+
+列表推导式，生成器推导式，字典推导式、集合推导式
+
+[expr for expr1 in seq1 if con1 for expr2 in seq2 if con2 ……]
+(expr for expr1 in seq1 if con1 for expr2 in seq2 if con2 ……)
+{i:str(i) for i in range(5)}
+{i for i in range(5)}
+
+3.3 字典
+创建：
+dict(zip(keys,values))
+dict.fromkeys(iterable, value=None, /)
+{key1:value1,key2:value2,……}
+
+增：
+D[keys] = values
+D.update(dict)
+D.setdefault(keys,values)
+
+删：
+D.pop(keys)
+D.popitem()
+D.clear() -> None.  Remove all items from D.
+del D[keys]
+
+改：
+D[keys] = values
+D.update(dict)
+
+查：
+D[keys]
+D.get(k[,d]) -> D[k] if k in D, else d
+D.setdefault(k[,d]) -> D.get(k,d), also set D[k]=d if k not in D
+D.items() -> a set-like object providing a view on D's items
+D.keys() -> a set-like object providing a view on D's keys
+D.values() -> an object providing a view on D's values
+
+复制：
+D.copy() -> a shallow copy of D
+
+3.4 集合
+
+增：
+S.add()
+S.update()
+
+删：
+S.discard()
+S.remove()
+S.pop()
+S.clear()
+
+集合运算与改:
+S1 | S2  S1.union(S2)  S1.update(S2)
+S1 & S2  S1.intersection(S2)  S1.intersection_update(S2)
+S1 - S2  S1.difference(S2)  S1.difference_update(S2)
+S1 ^ S2  S1.symmetric_difference(S2)  S1.symmetric_difference_update(S2)
+S1 <= S2  S1.issubset(S2)
+S1 >= S2  S1.issuperset(S2)
+S1.isdisjoint(S2)
+
+查：
+S[]
+
+根据笔者的测试，在 for 循环中，应优先使用 dict,set，其次考虑使用 range, 最后才考虑使用 tuple 和 list. 测试代码：
+
+import random
+import time
+
+n = 1000000
+
+a = range(n)
+x0 = a
+x1 = list(a)
+x2 = tuple(a)
+x3 = dict(zip(a,a))
+x4 = set(a)
+
+for t in (x0,x1,x2,x3,x4):
+    start = time.time()
+    j = 0
+    while j < 1000000:
+    	if 100 in t:
+    		j += 1
+    print(type(t),'time used:',time.time()-start)
+
+测试结果：
+
+<class 'range'> time used: 1.0599009990692139
+<class 'list'> time used: 6.158532381057739
+<class 'tuple'> time used: 6.13196325302124
+<class 'dict'> time used: 0.5875310897827148
+<class 'set'> time used: 0.5935060977935791
+
+'''
+
+'''
+4 
 '''
