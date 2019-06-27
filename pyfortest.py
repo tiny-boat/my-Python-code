@@ -249,10 +249,81 @@ for t in (x0,x1,x2,x3,x4):
 <class 'list'> time used: 6.158532381057739
 <class 'tuple'> time used: 6.13196325302124
 <class 'dict'> time used: 0.5875310897827148
-<class 'set'> time used: 0.5935060977935791
+<class 'set'> time xused: 0.5935060977935791
 
 '''
 
 '''
 4 
 '''
+
+# 11.异常处理 try(可能出现异常的代码) except(出现指定错误后执行的操作) else(没有引发异常时执行的代码) finally(无论是否引发异常均执行的代码)
+
+while True:
+    x = input("Please input a number：")
+    try:
+        a = int(x)
+    except ValueError as reason:
+        print("Error input: %s" % reason)
+    else:
+    	break
+    finally:
+    	print("程序结束")
+
+print("您输入的数字为：%d" % a)
+
+# 10.文件与文件夹操作
+
+# 删除目录中以s开头.txt结尾的文件
+
+# import os
+# import re
+# fileset = os.listdir("D:\\github_tiny-boat\\my Python code")
+# def findFile(file_name):
+#     if re.match("s.*\.txt",file_name):
+#         return file_name
+#     else:
+#         return '0'
+# filedelset = filter(lambda x: x != '0', map(findFile,fileset))
+# for filedel in filedelset:
+#     os.remove("D:\\github_tiny-boat\\my Python code\\%s"%filedel)
+
+# fileset = os.listdir("D:\\github_tiny-boat\\my Python code")
+# fileset = map(lambda name:re.match("s.+\.txt",name),list)
+# for file_name in fileset:
+#     try:
+#         filedel = file_name.group()
+#         os.remove("D:\\github_tiny-boat\\my Python code\\%s"%filedel)
+#     except AttributeError as e:
+#         continue
+
+# 9.文本文件的读写
+
+# s = 'hello world'
+# with open('sample.txt','w') as fp:
+#     fp.write(s)
+# with open('sample.txt') as fp:
+#     print(fp.read())
+
+def fileCopy(src,dst,srcEncoding,dstEncoding):
+    with open(src,'r',encoding=srcEncoding) as srcfp:
+        with open(dst,'w',encoding=dstEncoding) as dstfp:
+            dstfp.write(srcfp.read())
+
+def fileCopy(src,dst,srcEncoding,dstEncoding):
+    srcfp = open(src,'r',encoding=srcEncoding)
+    dstfp = open(dst,'w',encoding=dstEncoding)
+    dstfp.write(srcfp.read())
+    srcfp.close()
+    dstfp.close()
+
+# fileCopy('sample.txt','sample_new.txt','cp936','utf-8')
+
+with open('sample.txt') as fp:
+    for line in fp:
+        print(line)
+
+
+# 8.1.3 正则表达式
+
+
