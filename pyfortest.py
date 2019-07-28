@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+
+
 '''
 1.1 python 是怎样一种语言
 
@@ -33,7 +35,7 @@ requirements.txt 格式：numpy==1.15.0
 
 1.7 标准库与扩展库中对象的导入与使用
 
-import module_name [as other_name] 
+import module_name [as other_name]
 from module_name import object_name [as other_name]
 from module_name import *
 模块导入搜索路径：首先是当前目录，而后是 sys 模块中 path 变量指定的目录，如果都没有抛出异常
@@ -326,4 +328,25 @@ with open('sample.txt') as fp:
 
 # 8.1.3 正则表达式
 
+# 正则表达式用法可通过 import re 后通过 help(re) 命令查到
 
+[] Indicates a set of characters.
+[] 内部的 ^ 代表否定
+[] 内部的 . 就是英文句号
+"|" A|B, creates an RE that will match either A or B.
+(...)  Matches the RE inside the parentheses.
+"?" Matches 0 or 1 (greedy) of the preceding RE.
+"*" Matches 0 or more (greedy) repetitions of the preceding RE.
+"+" Matches 1 or more (greedy) repetitions of the preceding RE.
+{m,n} Matches from m to n repetitions of the preceding RE.
+"." Matches any character except a newline.
+"^" Matches the start of the string.
+"$" Matches the end of the string or just before the newline at the end of the string.
+\w  Matches any alphanumeric character; equivalent to [a-zA-Z0-9_]
+\d  Matches any decimal digit; equivalent to the set [0-9] in
+
+match
+search
+findall
+split
+sub
