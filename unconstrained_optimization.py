@@ -82,7 +82,7 @@ def inexactLineSearch(x0,d0,func,grad,start=0,end=1e10,rho=0.1,sigma=0.4,criteri
 
     return minPoint
 
-def stopCondition(x0,x1,f0,f1,grad1,eps1,eps2):
+def stopCondition(x0,x1,f0,f1,grad1,eps1,eps2,gradneed=True):
     '''create stop condition controlled by eps1 and eps2
     using informations including x0,x1,f(x0),f(x1) and gradient(x1)'''
 
@@ -94,7 +94,10 @@ def stopCondition(x0,x1,f0,f1,grad1,eps1,eps2):
     else:
         diffF = abs(f1-f0)
         diffX = np.linalg.norm(x1-x0)
-    return diffF > eps2 and diffX > eps2 and np.linalg.norm(grad1) > eps1
+    if gradneed == True:
+        return diffF > eps2 and diffX > eps2 and np.linalg.norm(grad1) > eps1
+    else:
+        return diffF > eps2 and diffX > eps2
 
 @prinTime
 def gradDescent(x0,func,grad,eps1=1e-4,eps2=1e-5,search=True,exactsearch=False,appendix=False):
@@ -368,19 +371,19 @@ def conjuGrad(x0,func,grad,eps1=1e-4,eps2=1e-5,method='DY',search=True,exactsear
             # update approximate inverse of Hessian
             y0 = grad1 - grad0
             if method == 'HS':
-            	beta1 = np.dot(grad1,y0) / np.dot(d0,y0)   # Hestenes-Stiefel (1952)
+                beta1 = np.dot(grad1,y0) / np.dot(d0,y0)   # Hestenes-Stiefel (1952)
             elif method == 'LS':
-            	beta1 = np.dot(grad1,y0) / np.dot(-d0,grad0)   # Liu-Storey (1964)
+                beta1 = np.dot(grad1,y0) / np.dot(-d0,grad0)   # Liu-Storey (1964)
             elif method == 'PR':
-            	beta1 = np.dot(grad1,y0) / np.dot(grad0,grad0)   # Polak-Ribiere (1964)
+                beta1 = np.dot(grad1,y0) / np.dot(grad0,grad0)   # Polak-Ribiere (1964)
             elif method == 'FR':
-            	beta1 = np.dot(grad1,grad1) / np.dot(grad0,grad0)   # Fletcher-Reeves (1969)
+                beta1 = np.dot(grad1,grad1) / np.dot(grad0,grad0)   # Fletcher-Reeves (1969)
             elif method == 'CD':
-            	beta1 = np.dot(grad1,grad1) / np.dot(-d0,grad0)   # Fletcher (1988)
+                beta1 = np.dot(grad1,grad1) / np.dot(-d0,grad0)   # Fletcher (1988)
             elif method == 'DY':
-            	beta1 = np.dot(grad1,grad1) / np.dot(d0,y0)   # Dai-Yuan (2000)
+                beta1 = np.dot(grad1,grad1) / np.dot(d0,y0)   # Dai-Yuan (2000)
             else:
-            	beta1 = 0
+                beta1 = 0
 
             # update x0,d0 for computing next iteration point
             # update f0,grad0 for computing next stop condition
@@ -404,6 +407,67 @@ def conjuGrad(x0,func,grad,eps1=1e-4,eps2=1e-5,method='DY',search=True,exactsear
     else:
         return x0
 
+@prinTime
+def nelderMead(x0,func,k=2,rho=1,sigma=2,gamma=0.5,eps1=1e-4,eps2=1e-5,appendix=True):
+
+    if appendix == True:
+        start = x0
+
+    dimX = np.size(x0)
+    A = np.array([x0] * dimX) + k * np.identity(dimX)
+    simplexMat = np.append(x0,A).reshape(dimX+1,dimX)   # set of vertexes of simplex
+    fMat = list(map(func,simplexMat))   # function values of vertexes
+
+    fMax, fMin, iterNum = 1, 0, 0
+    while abs(fMax-fMin) >= eps2:
+
+        fMax, fSecMax, fMin = max(fMat), sorted(fMat)[-2], min(fMat)
+        maxIndex, secMaxIndex, minIndex = fMat.index(fMax), fMat.index(fSecMax), fMat.index(fMin)
+
+        simplexMax = simplexMat[maxIndex]
+        centroid = (simplexMat.cumsum(axis=0)[dimX] - simplexMax) / dimX   # centroid
+        vertexNew = centroid + rho * (centroid - simplexMax)   # reflection
+        fNew = func(vertexNew)
+
+        if fNew < fSecMax and fNew >= fMin:
+            simplexMat[maxIndex] = vertexNew
+            fMat[maxIndex] = fNew
+        elif fNew < fMin:
+            vertexNew2 = centroid + sigma * (vertexNew - centroid)   # expansion
+            fNew2 = func(vertexNew2)
+            if fNew2 < fNew:
+                simplexMat[maxIndex] = vertexNew2   # expansion is successful
+                fMat[maxIndex] = fNew2
+            else:
+                simplexMat[maxIndex] = vertexNew   # expansion is unsuccessful
+                fMat[maxIndex] = fNew
+        else:
+            if fNew < fMax:
+                vertexNew2 = centroid + gamma * (vertexNew - centroid)   # inside contraction
+            else:
+                vertexNew2 = centroid + gamma * (simplexMax - centroid)   # outside contraction
+            fNew2 = func(vertexNew2)
+            if fNew2 < fMax:
+                simplexMat[maxIndex] = vertexNew2   # contraction is successful
+                fMat[maxIndex] = fNew2
+            else:
+                for i,value in enumerate(simplexMat):
+                    simplexMat[i] = (value + simplexMat[minIndex]) / 2   # contraction is unsuccessful
+                fMat = list(map(func,simplexMat))
+
+        iterNum += 1
+
+    minPoint = simplexMat[minIndex]
+    if appendix == True:
+        print("方法：Nelder-Mead 单纯形法")
+        print("初始点：{0}".format(start))
+        print("停止点：{0}; 停止点函数值：{1}".format(minPoint, fMin))
+        print("迭代次数：{0}".format(iterNum))
+        return minPoint, fMin, iterNum
+    else:
+        return minPoint
+
+
 def func(x):
     return 100 * (x[0] ** 2 - x[1]) ** 2 + (x[0] - 1) ** 2
 
@@ -415,7 +479,7 @@ def hess(x):
     h12 = - 400 * x[0]
     return np.array([[1200 * x[0] ** 2 - 400 * x[1] + 2, h12],[h12, 200]])
 
-x0 = np.array([0,10])
+x0 = np.array([1000,100])
 
 # gradDescent(x0,func,grad,search=False,appendix=True)
 # gradDescent(x0,func,grad,exactsearch=False,appendix=True)
@@ -431,6 +495,14 @@ x0 = np.array([0,10])
 # quasiNewton(x0,func,grad,exactsearch=False,appendix=True)
 # quasiNewton(x0,func,grad,exactsearch=True,appendix=True)
 
-conjuGrad(x0,func,grad,search=False,appendix=True)
-conjuGrad(x0,func,grad,exactsearch=False,appendix=True)
-conjuGrad(x0,func,grad,exactsearch=True,appendix=True)
+# conjuGrad(x0,func,grad,search=False,appendix=True)
+# conjuGrad(x0,func,grad,exactsearch=False,appendix=True)
+# conjuGrad(x0,func,grad,exactsearch=True,appendix=True)
+
+nelderMead(x0,func)
+
+# a = list(map(lambda x:x/max(x),data))
+# b = np.array([])
+# for i in a:
+#     b = np.append(b,i)
+# data = b.reshape(20,20)
