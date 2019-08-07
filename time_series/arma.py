@@ -1,7 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import numpy as np
-from math import sqrt
-from scipy.stats import chi2
-# from scipy.optimize import Bounds, minimize, LinearConstraint
+from statsmodels.tsa import arima_process, stattools
+'''
+statsmodels.tsa is an Python third party library
+using for time_series_analysis
+'''
 
 
 def armaME(p, q, gamma):
@@ -142,7 +147,7 @@ def armaME(p, q, gamma):
         if i < p:
             print('    a%d = %.4f' % (i+1, value))
         else:
-            if i < p+q:
+            if i < p + q:
                 print('    b%d = %.4f' % (i-p+1, value))
             else:
                 print('    sigma^2 = %.4f' % value)
@@ -240,59 +245,111 @@ def armaAutocov(coeAR, coeMA, sigma2, kmax=10):
     return gamma
 
 
-def normaliz(x):
-    return (x - x.mean()) / x.std()
-
-
-def rejRate(c1, c2, d1, d2, sigma2=1, seriesLen=400,
-             maxLag=5, alpha=0.05, testNum=500):
+def _rejRate(a1, a2, b1, b2, sigma2=1, seriesLen=400,
+            maxLag=6, alpha=0.05, testNum=500):
 
     a1, a2, b1, b2 = c1 + c2, - c1 * c2, - (d1 + d2), d1 * d2
+    ar, ma = (1, -a1, -a2), (1, b1, b2)
     rejNum = 0
     for j in range(testNum):
-        series = np.random.random_sample(2) * 10 - 10
-        noises = np.random.randn(3) * sqrt(sigma2)
-        # generate series of ARMA(2, 2)
-        for i in range(seriesLen):
-            series = np.append(series, a1 * series[-1] + a2 * series[-2]
-                               + noises[-1] + b1 * noises[-2] + b2 * noises[-3])
-            noises = np.append(noises[-2:], np.random.randn(1))
-        series = series[-seriesLen:]
-        # compute sample autocorrelations of series of ARMA(2, 2)
-        autoCorr = np.zeros(maxLag + 1)
-        for k in range(1, maxLag + 1):
-            autoCorr[k] = np.dot(normaliz(series[0:seriesLen-k]), normaliz(series[k:])) / (seriesLen-k-1)
-        # compute chisquare statistics and its p value
-        chisq = seriesLen * np.dot(autoCorr, autoCorr)
-        chisqPValue = 1 - chi2.cdf(chisq, maxLag)
+        series = arima_process.arma_generate_sample(ar, ma, seriesLen)
+        # autoCorr_chisq include acovf, Ljung–Box Q statistics and p-value
+        autoCorr_chisq = stattools.acf(series, nlags=maxLag, qstat=True, fft=False)
+        chisqPValue = autoCorr_chisq[2][-1]
         if chisqPValue < alpha:
             rejNum += 1
 
     rejRate = rejNum / testNum
-    # print('c1 = %f, c2 = %f, d1 = %f, d2 = %f, sigam^2 = %f'
-    #        % (c1, c2, d1, d2, sigma2))
-    # print('a1 = %f, a2 = %f, b1 = %f, b2 = %f, sigam^2 = %f'
-    #        % (a1, a2, b1, b2, sigma2))
-    # print('    reject rate: %.2f %%\n' % (rejRate * 100))
     return rejRate
 
 
 if __name__ == '__main__':
 
-    # p, q, gamma = 0, 2, (12.4168, -4.7520, 5.2)
-    # maPara = armaME(p, q, gamma)
+    # 1.5
+    print('\n***********\n    1.5\n***********')
+    p, q, gamma = 0, 2, (12.4168, -4.7520, 5.2)
+    maPara = armaME(p, q, gamma)
 
-    # p, q, gamma = 2, 2, (5.61, -1.1, 0.23, 0.43, -0.1)
-    # armaPara = armaME(p, q, gamma)
+    # 2.4
+    print('\n***********\n    2.4\n***********')
+    p, q, gamma = 2, 2, (5.61, -1.1, 0.23, 0.43, -0.1)
+    armaPara = armaME(p, q, gamma)
 
-    # coeAR, coeMA, sigma2 = (0.0894, -0.6265), (-0.3334, 0.8158), 4.0119
-    # armaGamma = armaAutocov(coeAR, coeMA, sigma2)
+    # 2.5
+    print('\n***********\n    2.5\n***********')
 
-    c1, d1, d2 = 0.2, 0.5, 0.5
-    record = []
-    for c2 in range(-10, 10, 1):
+    print('\n# method 1: use custom function armaAutocov()')
+    coeAR, coeMA, sigma2 = (0.0894, -0.6265), (-0.3334, 0.8158), 4.0119
+    armaGamma = armaAutocov(coeAR, coeMA, sigma2)
+
+    print('# method 2: use function arima_process.arma_acovf()'
+          + ' in statsmodels.tsa\n')
+    ar, ma, sigma2 = (1, -0.0894, 0.6265), (1, -0.3334, 0.8158), 4.0119
+    armaAcovf = arima_process.arma_acovf(ar, ma, nobs=11, sigma2=sigma2)
+    for i, value in enumerate(armaAcovf):
+        if i > 4:
+            print('    γ%d = %.4f' % (i, value))
+    print('\n')
+
+    # 3.4
+    print('\n***********\n    3.4\n***********')
+    c1, d1, d2 = 0.3, 0.2, 0.4
+    c2L, rejrateL = [], []
+    for c2 in range(-9, 10):
         c2 = c2 / 10
-        rejrate = rejRate(c1, c2, d1, d2)
-        if rejrate < 0.9:
-            record.append((c2, rejrate*100))
-    print(record)
+        rejrate = round(_rejRate(c1, c2, d1, d2) * 100, 2)
+        c2L.append(c2)
+        rejrateL.append(rejrate)
+
+    print('\nCannot get all availabe (c1,c2,d1,d2)'
+          + ' that make the rejection rate > 90%')
+    print('since the soulutions of (c1,c2) is depend on values of (d1,d2)')
+    print('and no significantly quantitative laws can be found')
+    print('\nFollowing are two exaples:\n')
+    print('----c1 = 0.3, d1 = 0.2, d2 = 0.4----\n')
+    print('     c2     rejection rates')
+    for j in range(len(c2L)):
+        c2, rejrate = c2L[j], rejrateL[j]
+        if c2 >= 0:
+            if int(rejrate) < 10:
+                print('     {0}          {1} %'.format(c2, rejrate))
+            elif int(rejrate) < 100:
+                print('     {0}         {1} %'.format(c2, rejrate))
+            else:
+                print('     {0}        {1} %'.format(c2, rejrate))
+        else:
+            if int(rejrate) < 10:
+                print('    {0}          {1} %'.format(c2, rejrate))
+            elif int(rejrate) < 100:
+                print('    {0}         {1} %'.format(c2, rejrate))
+            else:
+                print('    {0}        {1} %'.format(c2, rejrate))
+
+    c1, d1, d2 = 0.4, 0.5, -0.3
+    c2L, rejrateL = [], []
+    for c2 in range(-9, 10):
+        c2 = c2 / 10
+        rejrate = round(_rejRate(c1, c2, d1, d2) * 100, 2)
+        c2L.append(c2)
+        rejrateL.append(rejrate)
+
+    print('\n----c1 = 0.4, d1 = 0.5, d2 = -0.3----\n')
+    print('     c2     rejection rates')
+    for j in range(len(c2L)):
+        c2, rejrate = c2L[j], rejrateL[j]
+        intRej = int(rejrate)
+        if c2 >= 0:
+            if intRej < 10:
+                print('     {0}          {1} %'.format(c2, rejrate))
+            elif intRej < 100:
+                print('     {0}         {1} %'.format(c2, rejrate))
+            else:
+                print('     {0}        {1} %'.format(c2, rejrate))
+        else:
+            if intRej < 10:
+                print('    {0}          {1} %'.format(c2, rejrate))
+            elif intRej < 100:
+                print('    {0}         {1} %'.format(c2, rejrate))
+            else:
+                print('    {0}        {1} %'.format(c2, rejrate))
+    print('\n')
