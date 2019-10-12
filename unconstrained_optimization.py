@@ -648,28 +648,3 @@ y = np.arange(-5, 5, 1)
 xx, yy = np.meshgrid(x, y, sparse=True)
 z = np.sin(xx**2 + yy**2) / (xx**2 + yy**2)
 h = plt.contourf(x,y,z)
-
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import keys
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.wait import WebDriverWait
-browser = webdriver.Chrome()
-#try:
-browser.get('https://www.baidu.com')
-input = browser.find_element_by_id('kw')
-input.send_keys('灰汤')
-input.send_keys(Keys.ENTER)
-wait = WebDriverWait(browser, 10)
-wait.until(EC.presence_of_element_located((By.ID, 'content_left')))
-print(browser.current_url)
-    #print(browser.get_cookies())
-    #print(browser.page_source)
-#finally:
-#    browser.close()
-
-
-https://stats.nba.com/events/?flag=3&CFID=&CFPARAMS=&PlayerID=203497&TeamID=0&GameID=&ContextMeasure=FGA&Season=2018-19&SeasonType=Regular%20Season&LeagueID=00&PerMode=Totals&Scope=S&StatCategory=FG_PCT&section=leaders&sct=stream
-https://stats.nba.com/events/?flag=3&CFID=&CFPARAMS=&PlayerID=203497&TeamID=0&GameID=&ContextMeasure=FGA&Season=2018-19&SeasonType=Regular%20Season&LeagueID=00&PerMode=Totals&Scope=S&StatCategory=FG_PCT&section=leaders&sct=stream
-
