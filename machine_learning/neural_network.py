@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-
 # -----------------------------------------
 # set of activate function and its derivate
 # -----------------------------------------
