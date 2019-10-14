@@ -1,12 +1,22 @@
 
 from matplotlib import pyplot as plt
-from matplotlib.patches import Arc, Circle, Rectangle
+from matplotlib.patches import Arc, Circle, Rectangle, Polygon
 import requests
 import json
 import pandas as pd
+import numpy as np
 #import seaborn as sns
 #import matplotlib as mpl
 
+
+def Arc_fill(center, radius, theta1, theta2, resolution=50, **kwargs):
+    # generate the points
+    theta = np.linspace(np.radians(theta1), np.radians(theta2), resolution)
+    points = np.vstack((radius*np.cos(theta) + center[0], 
+                        radius*np.sin(theta) + center[1]))
+    # build the polygon and add it to the axes
+    poly = Polygon(points.T, closed=True, **kwargs)
+    return poly
 
 def get_page(url, params=None, isProx=False):
     try:
@@ -112,7 +122,8 @@ if emptyList != []:
     --------
 '''
 
-shotDF = pd.read_csv('f:/web_crawler_results/NBA/shotInfo2.csv', index_col=0)
+shotDF = pd.read_csv('f:/web_crawler_results/NBA/shotInfo2.csv', index_col=0,
+                     low_memory=False)
 
 
 '''
@@ -121,60 +132,67 @@ shotDF = pd.read_csv('f:/web_crawler_results/NBA/shotInfo2.csv', index_col=0)
     ---------
 '''
 
-def draw_ball_field(color='white', lw=2):
+def draw_ball_field(color='#003370', lw=2):
     # 新建一个大小为(6,6)的绘图窗口
-    plt.figure(figsize=(6, 6))
+    plt.figure(figsize=(5.36, 5.06), frameon=False)
     # 获得当前的Axes对象ax,进行绘图
-    ax = plt.gca()
+    ax = plt.gca(frame_on=False)
     # 设置坐标轴范围
-    ax.set_xlim(-250, 250)
-    ax.set_ylim(422.5, -47.5)
+    ax.set_xlim(-268, 268)
+    ax.set_ylim(440.5, -65.5)
     # 消除坐标轴刻度
     ax.set_xticks([])
     ax.set_yticks([])
     # 添加备注信息
     # plt.annotate('By xiao F', xy=(100, 160), xytext=(178, 418))
     # 对篮球场进行底色填充
-    lines_outer_rec = Rectangle(xy=(-250, -47.5), width=500, height=470,
-                                linewidth=lw, color='#86D4F9', fill=True)
+    lines_outer_rec = Rectangle(xy=(-268, -65.5), width=536, height=506,
+                                color='#f1f1f1', fill=True, zorder=0)
     # 设置篮球场填充图层为最底层
-    lines_outer_rec.set_zorder(0)
+    # lines_outer_rec.set_zorder(0)
     # 将rec添加进ax
     ax.add_patch(lines_outer_rec)
     # 绘制篮筐,半径为7.5
     circle_ball = Circle(xy=(0, 0), radius=7.5, linewidth=lw, color=color,
-                         fill=False)
+                         fill=False, zorder=3)
     # 将circle添加进ax
     ax.add_patch(circle_ball)
     # 绘制篮板,尺寸为(60,1)
     plate = Rectangle(xy=(-30, -7.5), width=60, height=-1, linewidth=lw,
-                      color=color, fill=False)
+                      color=color, fill=False, zorder=3)
     # 将rec添加进ax
     ax.add_patch(plate)
     # 绘制2分区的外框线,尺寸为(160,190)
     outer_rec = Rectangle(xy=(-80, -47.5), width=160, height=190,
-                          linewidth=lw, color=color, fill=False)
+                          linewidth=lw, color=color, fill=False, zorder=2)
     # 将rec添加进ax
     ax.add_patch(outer_rec)
     # 绘制2分区的内框线,尺寸为(120,190)
     inner_rec = Rectangle(xy=(-60, -47.5), width=120, height=190,
-                          linewidth=lw, color=color, fill=False)
+                          linewidth=lw, ec=color, fc="#FbFbFb", fill=True,
+                          zorder=2)
     # 将rec添加进ax
     ax.add_patch(inner_rec)
     # 绘制罚球区域圆圈,半径为60
     circle_punish1 = Arc(xy=(0, 142.5), width=120, height=120, theta1=0,
-                    theta2=180, linewidth=lw, color=color, fill=False)
+                         theta2=180, linewidth=lw, color=color, 
+                         fill=False, zorder=2)
     circle_punish2 = Arc(xy=(0, 142.5), width=120, height=120, theta1=180,
-                    theta2=360, linewidth=lw, linestyle='--', color=color, fill=False)
+                         theta2=360, linewidth=lw, linestyle='--', 
+                         color=color, fill=False, zorder=2)
     # circle_punish = Circle(xy=(0, 142.5), radius=60, linewidth=lw,
     #                       color=color, fill=False)
     # 将circle添加进ax
     ax.add_patch(circle_punish1)
     ax.add_patch(circle_punish2)
     # 绘制三分线的左边线
+    three_left_rec_fill = Rectangle(xy=(-220, -47.5), width=440, height=140,
+                                    ec="#f6f6f6", fc="#f6f6f6", 
+                                    fill=True, zorder=1)
     three_left_rec = Rectangle(xy=(-220, -47.5), width=0, height=140,
-                               linewidth=lw, color=color, fill=False)
+                               linewidth=lw, color=color, fill=False, zorder=1)
     # 将rec添加进ax
+    ax.add_patch(three_left_rec_fill)
     ax.add_patch(three_left_rec)
     # 绘制三分线的右边线
     three_right_rec = Rectangle(xy=(220, -47.5), width=0, height=140,
@@ -182,9 +200,14 @@ def draw_ball_field(color='white', lw=2):
     # 将rec添加进ax
     ax.add_patch(three_right_rec)
     # 绘制三分线的圆弧,圆心为(0,0),半径为238.66,起始角度为22.8,结束角度为157.2
+    three_arc_fill = Arc_fill(center=(0, 0), radius=238.66, theta1=22.8, 
+                              theta2=157.2, resolution=50, linewidth=0,
+                              ec="#f6f6f6", fc="#f6f6f6", fill=True, zorder=1)
     three_arc = Arc(xy=(0, 0), width=477.32, height=477.32, theta1=22.8,
-                    theta2=157.2, linewidth=lw, color=color, fill=False)
+                    theta2=157.2, linewidth=lw, color=color,
+                    fill=False, zorder=1)
     # 将arc添加进ax
+    ax.add_patch(three_arc_fill)
     ax.add_patch(three_arc)
     # 绘制中场处的外半圆,半径为60
     center_outer_arc = Arc(xy=(0, 422.5), width=120, height=120, theta1=180,
@@ -203,8 +226,8 @@ def draw_ball_field(color='white', lw=2):
     ax.add_patch(lines_outer_rec)
     return ax
 
-axs = draw_ball_field(color='white', lw=2)
-
+axs = draw_ball_field()
+plt.show()
 '''
     -------------
     绘制投篮热点图
@@ -212,7 +235,7 @@ axs = draw_ball_field(color='white', lw=2)
 '''
 
 # 分类数据
-shotDF_curry = shotDF[shotDF['PLAYER_NAME'] == 'Stephen Curry']
+shotDF_curry = shotDF[shotDF['PLAYER_NAME'] == 'Kevin Durant']
 shotDF_curry_made = shotDF_curry[shotDF_curry['EVENT_TYPE'] == 'Made Shot']
 shotDF_curry_miss = shotDF_curry[shotDF_curry['EVENT_TYPE'] == 'Missed Shot']
 
