@@ -141,56 +141,83 @@ if errorList != []:
 shotInfo.to_csv('F:/web_crawler_results/NBA/shotInfo3.csv')
 
 
-import asyncio
-import aiohttp
+import requests
 import time
+from multiprocessing import Pool
+import pandas as pd
+from requestData import request_data
 
-async def get(url, params, headers):
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url, params=params, headers=headers) as resp:
-            print(await resp.text())
-            # print(await resp.text())
-    # session = aiohttp.ClientSession()
-    # response = await session.get(url, headers=headers)
-    # result = await response.text()
-    # session.close()
-            return resp
+shotInfo, erl, eml = pd.DataFrame(), [], []
+start = time.time()
 
-async def request():
-    url = 'https://www.longzf.com'
+idInfo = pd.read_csv('f:/web_crawler_results/NBA/idInfo.csv', index_col=0)
+idl = idInfo["PERSON_ID"].tolist() 
+
+resultL = []
+p = Pool(10)
+for playerID in idl:
+    result = p.apply_async(request_data, args=(playerID, ))
+    resultL.append(result)
+
+# print('Waiting for all subprocesses done...')
+p.close()
+p.join()
+
+for result in resultL:
+    shotInfo = shotInfo.append(pd.DataFrame(result.get()))
+
+print(time.time() - start)
+
+
+import requests
+import time
+import pandas as pd
+
+idInfo = pd.read_csv('f:/web_crawler_results/NBA/idInfo.csv', index_col=0)
+playerIDList = idInfo["PERSON_ID"].tolist()
+
+start = time.time()
+# for year in range(1896, 2017, 4):
+for playerID in playerIDList[0:5]:
+    # url = 'https://en.wikipedia.org/wiki/' + str(year) + '_Summer_Olympics_medal_table'
+    url = 'https://stats.nba.com/stats/shotchartdetail?'
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-                + 'AppleWebKit/537.36 (KHTML, like Gecko) '
-                + 'Chrome/77.0.3865.90 Safari/537.36'}
-    params = None
-    # params = {
-    #     "SeasonType": "Regular Season",
-    #     "TeamID": 0,
-    #     "PlayerID": 201939,
-    #     "PlayerPosition": '',
-    #     "GameID": '',
-    #     "Outcome": '',
-    #     "Location": '',
-    #     "Month": 0,
-    #     "SeasonSegment": '',
-    #     "DateFrom": '',
-    #     "DateTo": '',
-    #     "OpponentTeamID": 0,
-    #     "VsConference": '',
-    #     "VsDivision": '',
-    #     "RookieYear": '',
-    #     "GameSegment": '',
-    #     "Period": 0,
-    #     "LastNGames": 0,
-    #     "ContextMeasure": "FGA",
-    # }
-    # print('waiting for', url)
-    result = await get(url, params, headers)
-    print(result)
-    # print('Get response from', url, 'Result:', result)
+               + 'AppleWebKit/537.36 (KHTML, like Gecko) '
+               + 'Chrome/77.0.3865.90 Safari/537.36'}
+    proxies = {'http': 'http://127.0.0.1:50926',
+               'https': 'https://127.0.0.1:50926'}
+    params = {
+        "SeasonType": "Regular Season",
+        "TeamID": '0',
+        "PlayerID": playerID,
+        "PlayerPosition": '',
+        "GameID": '',
+        "Outcome": '',
+        "Location": '',
+        "Month": '0',
+        "SeasonSegment": '',
+        "DateFrom": '',
+        "DateTo": '',
+        "OpponentTeamID": '0',
+        "VsConference": '',
+        "VsDivision": '',
+        "RookieYear": '',
+        "GameSegment": '',
+        "Period": '0',
+        "LastNGames": '0',
+        "ContextMeasure": "FGA",
+    }
+    resp = requests.get(url, params=params, proxies=proxies, headers=headers)
+    print('^^^^^')
+    print(resp.url)
+    print('&&&&&')
 
-tasks = [asyncio.ensure_future(request()) for _ in range(5)]
-loop = asyncio.get_event_loop()
-loop.run_until_complete(asyncio.wait(tasks))
+print(time.time() - start)
+
+
+
+loop.run_until_complete(asyncio.sleep(0.250))
+loop.close()
 # shotInfo, errorList, emptyList = pd.DataFrame(), [], []
 # for i, playerID in enumerate(playerIDList):
 #     url = 'https://stats.nba.com/stats/shotchartdetail?'
@@ -503,3 +530,77 @@ loop.run_until_complete(asyncio.wait(tasks))
 # #     #print(browser.page_source)
 # # #finally:
 # # #    browser.close()
+
+
+# import asyncio
+# import aiohttp
+# import time
+# import pandas as pd
+
+# idInfo = pd.read_csv('f:/web_crawler_results/NBA/idInfo.csv', index_col=0)
+# playerIDList = idInfo["PERSON_ID"].tolist()
+
+# start = time.time()
+# async def get(url, params, headers, proxy):
+#     async with aiohttp.ClientSession() as session:
+#         # print('********')
+#         # time.sleep(2)
+#         # print('--------')
+#         async with session.get(url, params=params, headers=headers, proxy=proxy) as resp:
+#             print('^^^^^')
+#             print(resp.url)
+#             # assert resp.url == 'https://stats.nba.com/teams/boxscores-traditional/?Season=2014-15&SeasonType=Regular%20Season'
+#             print('&&&&&')
+#             # print(await resp.text())
+#             # print(await resp.text())
+#     # session = aiohttp.ClientSession()
+#     # response = await session.get(url, headers=headers)
+#     # result = await response.text()
+#     # session.close()
+#     return resp
+
+# async def request(playerID):
+#     # url = 'https://en.wikipedia.org/wiki/' + str(year) + '_Summer_Olympics_medal_table'
+#     proxy = 'http://127.0.0.1:50926'
+#     # params = None
+#     # url = 'https://stats.nba.com/'
+#     # headers, params = None, None
+#     # url = 'https://stats.nba.com/teams/boxscores-traditional/'
+#     # params = {'Season':'2014-15', 'SeasonType':'Regular%20Season'}
+#     # url = 'https://stats.nba.com/stats/shotchartdetail?SeasonType=Regular%20Season&TeamID=0&PlayerID=201939&PlayerPosition=&GameID=&Outcome=&Location=&Month=0&SeasonSegment=&DateFrom=&DateTo=&OpponentTeamID=0&VsConference=&VsDivision=&RookieYear=&GameSegment=&Period=0&LastNGames=0&ContextMeasure=FGA'
+#     url = 'https://stats.nba.com/stats/shotchartdetail'
+#     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+#                + 'AppleWebKit/537.36 (KHTML, like Gecko) '
+#                + 'Chrome/77.0.3865.90 Safari/537.36',
+#                'Connection': 'close'}
+#     params = {
+#         "SeasonType": "Regular Season",
+#         "TeamID": '0',
+#         "PlayerID": playerID,
+#         "PlayerPosition": '',
+#         "GameID": '',
+#         "Outcome": '',
+#         "Location": '',
+#         "Month": '0',
+#         "SeasonSegment": '',
+#         "DateFrom": '',
+#         "DateTo": '',
+#         "OpponentTeamID": '0',
+#         "VsConference": '',
+#         "VsDivision": '',
+#         "RookieYear": '',
+#         "GameSegment": '',
+#         "Period": '0',
+#         "LastNGames": '0',
+#         "ContextMeasure": "FGA",
+#     }
+#     # print('waiting for', url)
+#     result = await get(url, params, headers, proxy)
+#     #print(result)
+#     # print('Get response from', url, 'Result:', result)
+
+# tasks = [asyncio.ensure_future(request(playerID)) for playerID in playerIDList[0:5]]
+# loop = asyncio.get_event_loop()
+# loop.run_until_complete(asyncio.wait(tasks))
+# print(time.time() - start)
+
